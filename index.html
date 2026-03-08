@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #060910;
+    --bg2:      #080d14;
+    --bg3:      #0d1520;
+    --border:   #1a2d40;
+    --border2:  #0f1f2e;
+    --teal:     #00d4aa;
+    --teal2:    #00a88a;
+    --blue:     #4fc3f7;
+    --gold:     #ffb74d;
+    --green:    #69db7c;
+    --red:      #ef5350;
+    --orange:   #ff7043;
+    --dim:      #445566;
+    --dim2:     #2a3a4a;
+    --text:     #c8d6e4;
+    --text2:    #8899aa;
+    --purple:   #c792ea;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; overflow:hidden; }
+  body {
+    background:var(--bg);
+    font-family:'Share Tech Mono', 'Courier New', monospace;
+    color:var(--text);
+    font-size:12px;
+  }
+  body::before {
+    content:'';
+    position:fixed; inset:0; pointer-events:none; z-index:9999;
+    background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+  }
+  body::after {
+    content:'';
+    position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.03;
+    background-image: linear-gradient(var(--teal) 1px, transparent 1px),
+                      linear-gradient(90deg, var(--teal) 1px, transparent 1px);
+    background-size:50px 50px;
+  }
+  #topbar {
+    position:fixed; top:0; left:0; right:0; z-index:100; height:42px;
+    background:linear-gradient(90deg, #070c14, #0d1825, #070c14);
+    border-bottom:1px solid var(--teal2);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 16px;
+    box-shadow:0 0 20px rgba(0,212,170,0.1);
+  }
+  #topbar .logo {
+    font-family:'Orbitron', monospace; font-size:12px; font-weight:900;
+    color:#000; background:linear-gradient(135deg, var(--teal), #0097a7);
+    padding:3px 12px; letter-spacing:3px;
+    clip-path:polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+  #topbar .meta { display:flex; gap:20px; align-items:center; font-size:10px; }
+  #topbar .meta span { color:var(--dim); }
+  #topbar .meta b { font-weight:normal; }
+  .val-teal { color:var(--teal); }
+  .val-blue { color:var(--blue); }
+  .val-gold { color:var(--gold); }
+  #ticker {
+    position:fixed; top:42px; left:0; right:0; z-index:99; height:24px;
+    background:#070e0d; border-bottom:1px solid rgba(0,212,170,0.2);
+    overflow:hidden; display:flex; align-items:center;
+  }
+  #ticker-inner {
+    white-space:nowrap; animation:scroll 45s linear infinite;
+    font-size:10px; color:var(--teal); letter-spacing:0.5px;
+  }
+  @keyframes scroll { from{transform:translateX(100vw)} to{transform:translateX(-100%)} }
+  #layout {
+    position:fixed; top:66px; bottom:0; left:0; right:0;
+    display:flex; z-index:1;
+  }
+  #sidebar-left {
+    width:190px; flex-shrink:0;
+    border-right:1px solid var(--border);
+    background:var(--bg2);
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .sidebar-section { padding:10px; border-bottom:1px solid var(--border2); }
+  .sidebar-label {
+    font-size:8px; color:var(--blue); letter-spacing:2px;
+    margin-bottom:8px; font-family:'Orbitron',monospace;
+  }
+  .kv { display:flex; justify-content:space-between; margin-bottom:4px; font-size:10px; }
+  .kv .k { color:var(--dim); }
+  .cat-item {
+    margin-bottom:6px; padding:4px 6px 4px 8px;
+    border-radius:0 2px 2px 0; position:relative;
+  }
+  .cat-item::before { content:''; position:absolute; left:0; top:0; bottom:0; width:2px; }
+  .cat-CRITICAL { background:rgba(239,83,80,0.1); }
+  .cat-CRITICAL::before { background:var(--red); }
+  .cat-HIGH { background:rgba(255,183,77,0.07); }
+  .cat-HIGH::before { background:var(--gold); }
+  .cat-MED { background:rgba(79,195,247,0.05); }
+  .cat-MED::before { background:var(--blue); }
+  .cat-date { font-size:8px; color:var(--dim); }
+  .cat-ticker { font-size:10px; color:#fff; font-weight:bold; }
+  .cat-ev { font-size:9px; }
+  .cat-CRITICAL .cat-ev { color:var(--red); }
+  .cat-HIGH .cat-ev { color:var(--gold); }
+  .cat-MED .cat-ev { color:var(--blue); }
+  .two-engine { padding:10px; font-size:9px; color:var(--dim2); line-height:1.8; margin-top:auto; }
+  .two-engine .lbl { color:var(--blue); font-size:8px; letter-spacing:1px; margin-bottom:4px; }
+  #main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  #tabs {
+    display:flex; background:var(--bg2);
+    border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .tab {
+    padding:10px 22px; font-size:10px; letter-spacing:2px;
+    border:none; background:transparent; color:var(--dim);
+    cursor:pointer; font-family:'Share Tech Mono',monospace;
+    border-bottom:2px solid transparent; transition:all 0.2s;
+  }
+  .tab:hover { color:var(--text2); }
+  .tab.active { color:var(--teal); border-bottom-color:var(--teal); background:rgba(0,212,170,0.04); }
+  #content { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+  .table-wrap { flex:1; overflow:auto; }
+  table { width:100%; border-collapse:collapse; font-size:10.5px; }
+  thead { position:sticky; top:0; z-index:10; }
+  thead tr { background:#0a1520; }
+  th {
+    padding:7px 10px; color:var(--blue); font-weight:normal;
+    letter-spacing:1px; font-size:9px; white-space:nowrap;
+    border-bottom:1px solid var(--border); text-align:center;
+    font-family:'Orbitron',monospace;
+  }
+  th.left { text-align:left; }
+  td { padding:5px 10px; white-space:nowrap; text-align:center; border-bottom:1px solid rgba(26,45,64,0.5); }
+  td.left { text-align:left; }
+  tr { cursor:pointer; transition:background 0.1s; }
+  tr:hover { background:rgba(0,212,170,0.04); }
+  tr.selected { background:rgba(0,212,170,0.07) !important; border-left:2px solid var(--teal); }
+  tr.even { background:var(--bg2); }
+  tr.odd { background:var(--bg); }
+  tfoot tr { background:#0a1520 !important; border-top:1px solid var(--border); cursor:default; }
+  tfoot td { color:var(--teal); font-weight:bold; padding:7px 10px; }
+  .badge { font-size:9px; padding:1px 5px; border-radius:2px; border:1px solid; }
+  .badge-teal  { color:var(--teal);  border-color:rgba(0,212,170,0.3); }
+  .badge-blue  { color:var(--blue);  border-color:rgba(79,195,247,0.3); }
+  .badge-gold  { color:var(--gold);  border-color:rgba(255,183,77,0.3); }
+  .badge-red   { color:var(--red);   border-color:rgba(239,83,80,0.3); }
+  .badge-green { color:var(--green); border-color:rgba(105,219,124,0.3); }
+  .badge-dim   { color:var(--dim);   border-color:rgba(68,85,102,0.3); }
+  .risk-HIGH { color:var(--red);   font-size:9px; padding:1px 4px; border:1px solid rgba(239,83,80,0.3);   border-radius:2px; }
+  .risk-MED  { color:var(--gold);  font-size:9px; padding:1px 4px; border:1px solid rgba(255,183,77,0.3);  border-radius:2px; }
+  .risk-LOW  { color:var(--green); font-size:9px; padding:1px 4px; border:1px solid rgba(105,219,124,0.3); border-radius:2px; }
+  #spec-warn {
+    padding:6px 16px; background:rgba(239,83,80,0.07);
+    border-bottom:1px solid rgba(239,83,80,0.2);
+    font-size:9px; color:var(--red); letter-spacing:1px; flex-shrink:0;
+  }
+  #sidebar-right {
+    width:210px; flex-shrink:0;
+    border-left:1px solid var(--border);
+    background:var(--bg2); overflow:auto;
+  }
+  #detail { padding:12px; }
+  #detail .ticker-header {
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;
+  }
+  #detail .ticker-name { font-family:'Orbitron',monospace; font-size:16px; color:var(--teal); letter-spacing:2px; }
+  #detail .close-btn { color:var(--dim); cursor:pointer; font-size:10px; }
+  #detail .close-btn:hover { color:var(--red); }
+  #detail .co-name { color:var(--dim); font-size:9px; margin-bottom:10px; line-height:1.4; }
+  #detail .dkv { display:flex; justify-content:space-between; margin-bottom:5px; font-size:10px; }
+  #detail .dkv .dk { color:var(--dim2); }
+  #detail .empty { padding:30px 16px; text-align:center; color:var(--dim2); line-height:2; font-size:10px; }
+  #detail .empty .lbl { color:var(--dim); font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px; margin-bottom:8px; }
+  #ai-btn {
+    margin-top:12px; width:100%; padding:6px;
+    background:rgba(0,212,170,0.05); border:1px solid rgba(0,212,170,0.3);
+    color:var(--teal); font-family:'Share Tech Mono',monospace; font-size:9px;
+    cursor:pointer; letter-spacing:1px; transition:all 0.2s;
+  }
+  #ai-btn:hover { background:rgba(0,212,170,0.1); }
+  #ai-panel { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  #ai-messages { flex:1; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .msg-user { display:flex; gap:8px; }
+  .msg-user .label { color:var(--blue); font-size:9px; white-space:nowrap; padding-top:1px; }
+  .msg-user .content { color:var(--text); font-size:11px; }
+  .msg-ai { display:flex; gap:8px; margin-left:12px; }
+  .msg-ai .label { color:var(--teal); font-size:9px; white-space:nowrap; padding-top:1px; }
+  .msg-ai .content { color:#a0b4c8; font-size:10.5px; line-height:1.8; white-space:pre-wrap; }
+  #ai-empty { text-align:center; color:var(--dim2); margin:auto; padding:40px 20px; line-height:2.5; }
+  #ai-empty .lbl { font-family:'Orbitron',monospace; color:var(--teal); font-size:11px; letter-spacing:2px; }
+  #ai-empty .sub { font-size:10px; color:var(--dim); }
+  #ai-empty .hint { font-size:9px; color:var(--dim2); }
+  .blink { animation:blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  #quick-queries {
+    padding:6px 12px; border-top:1px solid var(--border);
+    display:flex; gap:5px; flex-wrap:wrap; flex-shrink:0;
+    background:var(--bg2);
+  }
+  .qq {
+    background:var(--bg3); border:1px solid var(--border);
+    color:var(--blue); padding:2px 7px; font-size:8px;
+    cursor:pointer; font-family:inherit; letter-spacing:0.3px;
+    border-radius:2px; transition:all 0.15s;
+  }
+  .qq:hover { border-color:var(--blue); background:rgba(79,195,247,0.05); }
+  #ai-input-bar {
+    display:flex; gap:8px; align-items:center;
+    padding:8px 16px; border-top:1px solid var(--border);
+    background:var(--bg2); flex-shrink:0;
+  }
+  #ai-input-bar .prompt { color:var(--teal); font-size:11px; white-space:nowrap; }
+  #ai-input {
+    flex:1; background:transparent; border:none;
+    color:var(--text); font-family:'Share Tech Mono',monospace;
+    font-size:11px; outline:none;
+  }
+  #ai-input::placeholder { color:var(--dim2); }
+  #send-btn {
+    background:rgba(0,212,170,0.08); border:1px solid var(--teal);
+    color:var(--teal); padding:4px 14px; font-size:9px;
+    cursor:pointer; font-family:inherit; letter-spacing:1px; transition:all 0.2s;
+  }
+  #send-btn:hover { background:rgba(0,212,170,0.15); }
+  #send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+  ::-webkit-scrollbar { width:3px; height:3px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .y-high { color:var(--orange); }
+  .y-med  { color:var(--gold); }
+  .y-low  { color:var(--green); }
+  .g-pos  { color:var(--green); }
+  .g-neg  { color:var(--red); }
+  .g-neu  { color:var(--dim); }
+  .ticker-cell      { color:var(--teal); font-weight:bold; font-family:'Orbitron',monospace; font-size:9px; }
+  .ticker-cell-spec { color:var(--blue); font-weight:bold; font-family:'Orbitron',monospace; font-size:9px; }
+  .price-cell { color:#fff; font-weight:bold; }
+  .stop-cell  { color:var(--red); }
+  .pt-cell    { color:var(--gold); font-weight:bold; }
+  .up-cell    { color:var(--teal); font-weight:bold; }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="logo">PORTFOLIO TERMINAL</div>
+    <span id="clock" style="color:var(--teal);font-size:10px;"></span>
+    <span id="datef" style="color:var(--dim);font-size:10px;"></span>
+  </div>
+  <div class="meta">
+    <span>INCOME</span> <b class="val-teal">$17,800</b>
+    <span style="color:var(--border);">|</span>
+    <span>SPEC</span> <b class="val-blue">$1,000</b>
+    <span style="color:var(--border);">|</span>
+    <span>DIV/YR</span> <b class="val-gold">$1,143</b>
+    <span style="color:var(--border);">|</span>
+    <span>MONTHLY</span> <b class="val-gold">~$95</b>
+  </div>
+</div>
+
+<div id="ticker">
+  <div id="ticker-inner">
+    🔴 BMR EARNINGS MON MAR 10 — CRITICAL &nbsp;&nbsp;|&nbsp;&nbsp;
+    ⚠ VERI EARNINGS THU MAR 12 — HOLD THROUGH &nbsp;&nbsp;|&nbsp;&nbsp;
+    ⚡ XLU EX-DIV MAR 23 — BUY BEFORE &nbsp;&nbsp;|&nbsp;&nbsp;
+    🟢 ZIM MERGER TARGET $35 — HOLD ALL 13 SHARES &nbsp;&nbsp;|&nbsp;&nbsp;
+    🟢 CATX 14 ANALYSTS BUY — EARNINGS MAR 26 &nbsp;&nbsp;|&nbsp;&nbsp;
+    ⚠ HTGC SHORT REPORT — MONITOR NII COVERAGE &nbsp;&nbsp;|&nbsp;&nbsp;
+    🟡 INUV GOVT CONTRACT WEEKS AWAY — CATALYST IMMINENT &nbsp;&nbsp;|&nbsp;&nbsp;
+    🔵 STIM EARNINGS MAR 17 — 52-WK LOW ENTRY &nbsp;&nbsp;|&nbsp;&nbsp;
+    🔵 CGTX EARNINGS MAR 19 — FDA TYPE C CONSTRUCTIVE &nbsp;&nbsp;&nbsp;&nbsp;
+    🔴 BMR EARNINGS MON MAR 10 — CRITICAL &nbsp;&nbsp;|&nbsp;&nbsp;
+    ⚠ VERI EARNINGS THU MAR 12 — HOLD THROUGH &nbsp;&nbsp;|&nbsp;&nbsp;
+    ⚡ XLU EX-DIV MAR 23 — BUY BEFORE &nbsp;&nbsp;|&nbsp;&nbsp;
+  </div>
+</div>
+
+<div id="layout">
+  <div id="sidebar-left">
+    <div class="sidebar-section">
+      <div class="sidebar-label">PORTFOLIO SUMMARY</div>
+      <div class="kv"><span class="k">INCOME NAV</span><b class="val-teal">$17,800</b></div>
+      <div class="kv"><span class="k">SPEC NAV</span><b class="val-blue">$1,000</b></div>
+      <div class="kv"><span class="k">TOTAL NAV</span><b style="color:#fff">$18,800</b></div>
+      <div class="kv"><span class="k">ANN. INCOME</span><b class="val-gold">$1,143</b></div>
+      <div class="kv"><span class="k">MONTHLY AVG</span><b class="val-gold">~$95</b></div>
+      <div class="kv"><span class="k">YIELD</span><b class="val-teal">~6.4%</b></div>
+      <div class="kv"><span class="k">ZIM UPSIDE</span><b style="color:var(--green)">$455@close</b></div>
+      <div class="kv"><span class="k">MST COLLECTED</span><b style="color:var(--green)">~$537</b></div>
+    </div>
+    <div class="sidebar-section" style="flex:1;overflow:auto;">
+      <div class="sidebar-label">CATALYSTS</div>
+      <div id="catalysts"></div>
+    </div>
+    <div class="two-engine">
+      <div class="lbl">TWO-ENGINE RULE</div>
+      50% spec profits → ARCC/O<br>
+      50% spec profits → reload<br>
+      Wins travel UP ↑<br>
+      Losses stay DOWN ↓
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="tabs">
+      <button class="tab active" onclick="switchTab('income',this)">INCOME</button>
+      <button class="tab" onclick="switchTab('spec',this)">SPECULATIVE</button>
+      <button class="tab" onclick="switchTab('ai',this)">AI ANALYST</button>
+    </div>
+    <div id="content"></div>
+  </div>
+
+  <div id="sidebar-right">
+    <div id="detail">
+      <div class="empty">
+        <div class="lbl">POSITION DETAIL</div>
+        <div class="sub">Click any row<br>to view details</div>
+        <div class="hint" style="margin-top:8px;">Use AI ANALYST<br>for deep analysis</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const INCOME=[
+  {t:"PM",  name:"Philip Morris",         sh:22, cost:167.53,p:176.55,y:3.3, div:128,cat:"Tobacco",    st:"HOLD",    freq:"Quarterly"},
+  {t:"MO",  name:"Altria Group",          sh:4,  cost:null,  p:68.04, y:6.1, div:17, cat:"Tobacco",    st:"HOLD",    freq:"Quarterly"},
+  {t:"HESM",name:"Hess Midstream",        sh:8,  cost:null,  p:35.73, y:8.3, div:24, cat:"MLP",        st:"HOLD",    freq:"Quarterly"},
+  {t:"EPD", name:"Enterprise Products",   sh:60, cost:null,  p:33.00, y:6.7, div:133,cat:"MLP",        st:"NEW",     freq:"Quarterly"},
+  {t:"ENB", name:"Enbridge Inc.",         sh:28, cost:null,  p:53.00, y:5.2, div:77, cat:"Pipeline",   st:"NEW",     freq:"Quarterly"},
+  {t:"KO",  name:"Coca-Cola",             sh:6,  cost:null,  p:79.36, y:2.7, div:13, cat:"Div. King",  st:"HOLD",    freq:"Quarterly"},
+  {t:"SCHD",name:"Schwab Div. ETF",       sh:17, cost:null,  p:31.50, y:3.3, div:18, cat:"ETF",        st:"HOLD",    freq:"Quarterly"},
+  {t:"XLU", name:"Utilities SPDR",        sh:10, cost:null,  p:47.28, y:2.68,div:13, cat:"Utilities",  st:"NEW",     freq:"Quarterly ⚡"},
+  {t:"ARCC",name:"Ares Capital",          sh:102,cost:null,  p:19.50, y:10.1,div:201,cat:"BDC",        st:"NEW",     freq:"Quarterly"},
+  {t:"HTGC",name:"Hercules Capital",      sh:17, cost:null,  p:15.00, y:10.6,div:27, cat:"BDC",        st:"WATCH ⚠", freq:"Quarterly"},
+  {t:"O",   name:"Realty Income",         sh:37, cost:null,  p:54.00, y:5.4, div:108,cat:"REIT",       st:"NEW",     freq:"Monthly"},
+  {t:"STWD",name:"Starwood Property",     sh:20, cost:null,  p:17.94, y:10.7,div:38, cat:"mREIT",      st:"NEW",     freq:"Quarterly"},
+  {t:"VZ",  name:"Verizon",               sh:30, cost:null,  p:44.00, y:6.1, div:81, cat:"Telecom",    st:"NEW",     freq:"Quarterly"},
+  {t:"T",   name:"AT&T Inc.",             sh:14, cost:null,  p:28.98, y:3.87,div:16, cat:"Telecom",    st:"NEW",     freq:"Quarterly"},
+  {t:"ABBV",name:"AbbVie Inc.",           sh:6,  cost:null,  p:234.00,y:3.5, div:49, cat:"Pharma",     st:"NEW",     freq:"Quarterly"},
+  {t:"PFE", name:"Pfizer Inc.",           sh:55, cost:null,  p:27.00, y:6.2, div:92, cat:"Pharma",     st:"NEW",     freq:"Quarterly"},
+  {t:"SAN", name:"Banco Santander",       sh:15, cost:9.52,  p:11.03, y:4.8, div:8,  cat:"Intl. Bank", st:"UPGRADED",freq:"Semi-Ann."},
+  {t:"LYG", name:"Lloyds Banking",        sh:11, cost:null,  p:5.70,  y:5.5, div:3,  cat:"Intl. Bank", st:"HOLD",    freq:"Semi-Ann."},
+  {t:"ABEV",name:"Ambev S.A.",            sh:10, cost:null,  p:3.08,  y:10.8,div:3,  cat:"Beverage",   st:"HOLD",    freq:"Semi-Ann."},
+  {t:"ZIM", name:"ZIM Integrated",        sh:13, cost:18.05, p:29.00, y:0,   div:0,  cat:"Merger Arb", st:"HOLD ALL",freq:"Merger→$35"},
+  {t:"MST", name:"Def.Lev.MSTR ETF",     sh:29, cost:3.40,  p:3.33,  y:108, div:104,cat:"Spec.Income",st:"HOLD",    freq:"Weekly"},
+  {t:"MRNY",name:"Merlyn.AI Fund",        sh:10, cost:null,  p:15.00, y:45,  div:68, cat:"Spec.Income",st:"HOLD",    freq:"Monthly"},
+  {t:"BITO",name:"ProShares Bitcoin ETF", sh:5,  cost:null,  p:16.80, y:8,   div:7,  cat:"Crypto ETF", st:"HOLD",    freq:"Monthly"},
+  {t:"ETHA",name:"iShares Ethereum ETF",  sh:2,  cost:null,  p:20.50, y:0,   div:0,  cat:"Crypto ETF", st:"HOLD",    freq:"None"},
+  {t:"ACHR",name:"Archer Aviation",       sh:4,  cost:null,  p:6.71,  y:0,   div:0,  cat:"Speculative",st:"HOLD",    freq:"None"},
+  {t:"SLV", name:"iShares Silver",        sh:2,  cost:null,  p:74.72, y:0,   div:0,  cat:"Silver",     st:"HOLD",    freq:"None"},
+  {t:"AAAU",name:"Perth Mint Gold ETF",   sh:8,  cost:null,  p:25.50, y:0,   div:0,  cat:"Gold",       st:"HOLD",    freq:"None"},
+];
+
+const SPEC=[
+  {t:"SOUN",name:"SoundHound AI",           entry:7.85,p:7.85, sh:13,inv:100,stop:4.71,analysts:"Multi Buy",pt:"$16–$22", cat:"AI/Voice",    risk:"MED", st:"HOLD"},
+  {t:"VERI",name:"Veritone",                entry:2.98,p:2.98, sh:34,inv:100,stop:1.79,analysts:"5 S.Buy", pt:"$10.00",  cat:"Enterprise AI",risk:"HIGH",st:"WATCH"},
+  {t:"INUV",name:"Inuvo Inc.",              entry:2.97,p:2.97, sh:34,inv:100,stop:1.78,analysts:"5 Buy",   pt:"$6–$12",  cat:"AI Adtech",   risk:"MED", st:"HOLD"},
+  {t:"TLSI",name:"TriSalus Life Sciences",  entry:4.99,p:4.99, sh:20,inv:100,stop:2.99,analysts:"3 Buy",   pt:"$12.00",  cat:"Medtech",     risk:"MED", st:"HOLD"},
+  {t:"STIM",name:"Neuronetics",             entry:1.38,p:1.38, sh:72,inv:100,stop:0.83,analysts:"3 Buy",   pt:"$6.50",   cat:"Medtech",     risk:"MED", st:"HOLD"},
+  {t:"BMR", name:"Beamr Imaging",           entry:1.70,p:1.70, sh:59,inv:100,stop:1.02,analysts:"2 Buy",   pt:"$4.50",   cat:"AI Video",    risk:"HIGH",st:"⚠ CRITICAL"},
+  {t:"CATX",name:"Perspective Therapeutics",entry:5.10,p:5.10, sh:20,inv:100,stop:3.06,analysts:"14 Buy",  pt:"$13.33",  cat:"Biotech",     risk:"MED", st:"HOLD"},
+  {t:"CGTX",name:"Cognition Therapeutics",  entry:1.09,p:1.09, sh:92,inv:100,stop:0.65,analysts:"4 S.Buy", pt:"$3.33–$4",cat:"Biotech",     risk:"HIGH",st:"HOLD"},
+  {t:"ORGO",name:"Organogenesis",           entry:2.79,p:2.79, sh:36,inv:100,stop:1.67,analysts:"2 Buy",   pt:"$8.50",   cat:"Medtech",     risk:"MED", st:"HOLD"},
+  {t:"ONCY",name:"Oncolytics Biotech",      entry:1.02,p:1.02, sh:98,inv:100,stop:0.61,analysts:"1 Buy",   pt:"$6.25",   cat:"Biotech",     risk:"HIGH",st:"HOLD"},
+];
+
+const CATALYSTS=[
+  {date:"Mar 10",t:"BMR", ev:"Q4 Earnings", urgency:"CRITICAL"},
+  {date:"Mar 12",t:"VERI",ev:"Q4 Earnings", urgency:"HIGH"},
+  {date:"Mar 17",t:"STIM",ev:"Q4 Earnings", urgency:"HIGH"},
+  {date:"Mar 19",t:"CGTX",ev:"Q4 + FDA",    urgency:"HIGH"},
+  {date:"Mar 23",t:"XLU", ev:"Ex-Div Date", urgency:"MED"},
+  {date:"Mar 26",t:"CATX",ev:"Q4 Earnings", urgency:"HIGH"},
+  {date:"Apr 6", t:"TLSI",ev:"Q1 Earnings", urgency:"MED"},
+  {date:"~Weeks",t:"INUV",ev:"Govt Contract",urgency:"MED"},
+];
+
+const CTX=`INCOME PORTFOLIO (27 positions, ~$17,800 total, ~$1,143/yr income):
+PM(22sh@$167.53cost,$176.55now,3.3%yield), MO(4sh,$68.04,6.1%), HESM(8sh,$35.73,8.3%), EPD(60sh,$33,6.7%), ENB(28sh,$53,5.2%), KO(6sh,$79.36,2.7%), SCHD(17sh,$31.50,3.3%), XLU(10sh,$47.28,2.68%,EX-DIV MAR23), ARCC(102sh,$19.50,10.1%), HTGC(17sh,$15,10.6%,SHORT REPORT RISK), O(37sh,$54,5.4%,monthly), STWD(20sh,$17.94,10.7%,$400M buyback), VZ(30sh,$44,6.1%), T(14sh,$28.98,3.87%), ABBV(6sh,$234,3.5%), PFE(55sh,$27,6.2%), SAN(15sh@$9.52cost,$11.03now), ZIM(13sh@$18.05cost,$29now,merger→$35=+93.8% gain), MST(29sh@$3.40cost,~$537divs collected), MRNY(10sh,45%yield), BITO(5sh,8%), ETHA(2sh), ACHR(4sh), SLV(2sh), AAAU(8sh).
+SPECULATIVE PORTFOLIO (10 positions, $100 each, fresh start Mar 9 2026):
+SOUN($7.85,PT$16-22), VERI($2.98,PT$10,EARNINGS MAR12), INUV($2.97,govt contract weeks away), TLSI($4.99,PT$12,60%revgrowth), STIM($1.38,PT$6.50,EARNINGS MAR17), BMR($1.70,EARNINGS MON MAR10 CRITICAL,stop$1.02), CATX($5.10,PT$13.33,14analysts,EARNINGS MAR26), CGTX($1.09,PT$3.33,EARNINGS MAR19), ORGO($2.79,PT$8.50), ONCY($1.02,PT$6.25,+513%upside).
+RULES: Stop-loss -40% all spec. Two-Engine: 50% spec profits→ARCC/O within 30days. ZIM hold all→deploy to ARCC+O at close. HTGC monitor NII quarterly. XLU ex-div Mar23.
+TODAY: Sunday March 8 2026. Markets open Monday March 9.`;
+
+let tab='income', sel=null, hist=[], loading=false;
+
+function init(){
+  setInterval(()=>{
+    const n=new Date();
+    document.getElementById('clock').textContent=n.toLocaleTimeString('en-US',{hour12:false});
+    document.getElementById('datef').textContent=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  },1000);
+  document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});
+  document.getElementById('datef').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  const c=document.getElementById('catalysts');
+  CATALYSTS.forEach(x=>{c.innerHTML+=`<div class="cat-item cat-${x.urgency}"><div class="cat-date">${x.date}</div><div class="cat-ticker">${x.t}</div><div class="cat-ev">${x.ev}</div></div>`;});
+  render();
+}
+
+function switchTab(t,el){
+  tab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function render(){
+  const c=document.getElementById('content');
+  if(tab==='income') renderIncome(c);
+  else if(tab==='spec') renderSpec(c);
+  else renderAI(c);
+}
+
+function gc(s){
+  if(!s) return 'var(--dim)';
+  if(s.includes('HOLD')||s.includes('UPGRADED')) return 'var(--teal)';
+  if(s.includes('NEW')||s.includes('ADDED')) return 'var(--blue)';
+  if(s.includes('WATCH')||s.includes('⚠')) return 'var(--gold)';
+  if(s.includes('EXIT')||s.includes('🚨')) return 'var(--red)';
+  return 'var(--dim)';
+}
+
+function badge(s){
+  const c=gc(s);
+  const cls=c.includes('teal')?'badge-teal':c.includes('blue')?'badge-blue':c.includes('gold')?'badge-gold':c.includes('red')?'badge-red':'badge-dim';
+  return `<span class="badge ${cls}">${s}</span>`;
+}
+
+function renderIncome(el){
+  const tv=INCOME.reduce((s,p)=>s+(p.sh*p.p),0);
+  const td=INCOME.reduce((s,p)=>s+(p.div||0),0);
+  let rows='';
+  INCOME.forEach((p,i)=>{
+    const v=(p.sh*p.p).toFixed(0);
+    const gl=p.cost?((p.p-p.cost)/p.cost*100).toFixed(1):null;
+    const gc2=gl?(parseFloat(gl)>=0?'g-pos':'g-neg'):'g-neu';
+    const gs=gl?`${parseFloat(gl)>=0?'+':''}${gl}%`:'—';
+    const yc=p.y>8?'y-high':p.y>5?'y-med':'y-low';
+    const s=sel===p.t;
+    rows+=`<tr class="${i%2===0?'even':'odd'}${s?' selected':''}" onclick="selectRow('${p.t}','income')">
+      <td><span class="ticker-cell">${p.t}</span></td>
+      <td class="left">${p.name}</td>
+      <td style="color:var(--dim)">${p.sh}</td>
+      <td style="color:var(--dim2)">${p.cost?'$'+p.cost:'—'}</td>
+      <td class="price-cell">$${p.p.toFixed(2)}</td>
+      <td style="color:var(--blue)">$${parseInt(v).toLocaleString()}</td>
+      <td class="${gc2}">${gs}</td>
+      <td class="${yc}">${p.y?p.y+'%':'—'}</td>
+      <td style="color:var(--gold)">${p.div?'$'+p.div:'—'}</td>
+      <td style="color:var(--dim);font-size:10px">${p.cat}</td>
+      <td>${badge(p.st)}</td>
+      <td style="color:var(--dim2);font-size:9px">${p.freq}</td>
+    </tr>`;
+  });
+  el.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>TICKER</th><th class="left">COMPANY</th><th>SH</th><th>COST</th><th>PRICE</th><th>VALUE</th><th>G/L%</th><th>YIELD</th><th>ANN.DIV</th><th>SECTOR</th><th>STATUS</th><th>FREQUENCY</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr><td colspan="4" style="text-align:left;font-family:'Orbitron',monospace;font-size:9px">TOTALS — 27 POSITIONS</td><td></td><td>$${tv.toLocaleString('en-US',{maximumFractionDigits:0})}</td><td></td><td style="color:var(--teal)">~6.4%</td><td style="color:var(--gold)">$${td}/yr</td><td colspan="3" style="color:var(--dim);text-align:left">Every month covered · ~$95/mo avg</td></tr></tfoot>
+  </table></div>`;
+}
+
+function renderSpec(el){
+  const tv=SPEC.reduce((s,p)=>s+(p.sh*p.p),0);
+  let rows='';
+  SPEC.forEach((p,i)=>{
+    const gl=((p.p-p.entry)/p.entry*100).toFixed(1);
+    const gc2=parseFloat(gl)>=0?'g-pos':'g-neg';
+    const sd=((p.p-p.stop)/p.p*100).toFixed(0);
+    const pth=parseFloat(p.pt.replace(/[^0-9.]/g,'').split('–').pop());
+    const up=!isNaN(pth)?((pth-p.p)/p.p*100).toFixed(0):'—';
+    const s=sel===p.t;
+    rows+=`<tr class="${i%2===0?'even':'odd'}${s?' selected':''}" onclick="selectRow('${p.t}','spec')">
+      <td><span class="ticker-cell-spec">${p.t}</span></td>
+      <td class="left">${p.name}</td>
+      <td style="color:var(--dim2)">$${p.entry.toFixed(2)}</td>
+      <td class="price-cell">$${p.p.toFixed(2)}</td>
+      <td class="${gc2}">${parseFloat(gl)>=0?'+':''}${gl}%</td>
+      <td style="color:var(--blue)">$${(p.sh*p.p).toFixed(0)}</td>
+      <td class="stop-cell">$${p.stop.toFixed(2)}<br><span style="color:var(--dim2);font-size:8px">-${sd}%away</span></td>
+      <td style="color:var(--green);font-size:9px">${p.analysts}</td>
+      <td class="pt-cell">${p.pt}</td>
+      <td class="up-cell">${up!=='—'?'+'+up+'%':'—'}</td>
+      <td style="color:var(--dim);font-size:9px">${p.cat}</td>
+      <td><span class="risk-${p.risk}">${p.risk}</span></td>
+      <td>${badge(p.st)}</td>
+    </tr>`;
+  });
+  el.innerHTML=`<div id="spec-warn">⚠ GAMBLING ENGINE — $100 MAX PER POSITION — STOP-LOSS AT -40% — NEVER INVEST MORE THAN YOU CAN AFFORD TO LOSE</div>
+    <div class="table-wrap"><table>
+    <thead><tr><th>TICKER</th><th class="left">COMPANY</th><th>ENTRY</th><th>NOW</th><th>G/L%</th><th>VALUE</th><th>STOP</th><th>ANALYSTS</th><th>PT</th><th>UPSIDE</th><th>SECTOR</th><th>RISK</th><th>STATUS</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr><td colspan="4" style="text-align:left;font-family:'Orbitron',monospace;font-size:9px">TOTALS — 10 POSITIONS</td><td></td><td>$${tv.toFixed(0)}</td><td colspan="3"></td><td style="color:var(--teal)">Avg +261%</td><td colspan="3" style="color:var(--dim);text-align:left">6 earnings events Mar–Apr 2026</td></tr></tfoot>
+  </table></div>`;
+}
+
+function renderAI(el){
+  const msgs=hist.map(m=>m.role==='user'
+    ?`<div class="msg-user"><span class="label">YOU &gt;</span><span class="content">${esc(m.content)}</span></div>`
+    :`<div class="msg-ai"><span class="label">AI &gt;</span><div class="content">${esc(m.content)}</div></div>`
+  ).join('');
+  el.innerHTML=`<div id="ai-panel">
+    <div id="ai-messages">${hist.length===0?`<div id="ai-empty"><div class="lbl">AI PORTFOLIO ANALYST</div><div class="sub">Full portfolio context loaded.<br>Ask anything.</div><div class="hint">"Biggest risk this week?" · "Hold SOUN?" · "ZIM plan?" · "Income health?"</div></div>`:msgs}
+    ${loading?`<div class="msg-ai"><span class="label">AI &gt;</span><span class="content blink">▋ ANALYZING...</span></div>`:''}</div>
+    <div id="quick-queries">
+      <button class="qq" onclick="qq('Biggest risk this week?')">Risk this week?</button>
+      <button class="qq" onclick="qq('Should I hold SOUN or trim?')">Hold SOUN?</button>
+      <button class="qq" onclick="qq('ZIM merger: what is the plan at close?')">ZIM plan?</button>
+      <button class="qq" onclick="qq('Which spec positions have earnings this month?')">Earnings watch?</button>
+      <button class="qq" onclick="qq('How is my income portfolio positioned — any gaps?')">Income health?</button>
+      <button class="qq" onclick="qq('Two-Engine Rule: how much to move to income this week?')">Two-Engine?</button>
+    </div>
+    <div id="ai-input-bar">
+      <span class="prompt">QUERY &gt;</span>
+      <input id="ai-input" placeholder="Ask about your portfolios... (Enter to send)" onkeydown="if(event.key==='Enter')send()">
+      <button id="send-btn" onclick="send()">SEND</button>
+    </div>
+  </div>`;
+  setTimeout(()=>{const m=document.getElementById('ai-messages');if(m)m.scrollTop=m.scrollHeight;},50);
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function qq(q){const i=document.getElementById('ai-input');if(i){i.value=q;send();}}
+
+async function send(){
+  const i=document.getElementById('ai-input');
+  if(!i||!i.value.trim()||loading) return;
+  const q=i.value.trim(); i.value='';
+  loading=true; hist.push({role:'user',content:q});
+  renderAI(document.getElementById('content'));
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:`You are a Bloomberg Terminal AI analyst. Be concise and data-driven. No markdown headers. Reference specific tickers, prices, stops, catalysts. Today is Sunday March 8 2026, markets open Monday March 9.\n\n${CTX}`,
+        messages:hist})
+    });
+    const d=await r.json();
+    const rep=(d.content||[]).map(b=>b.text||'').join('')||'No response.';
+    hist.push({role:'assistant',content:rep});
+  }catch(e){hist.push({role:'assistant',content:'Connection error. Check internet and retry.'});}
+  loading=false;
+  renderAI(document.getElementById('content'));
+}
+
+function selectRow(t,type){
+  sel=sel===t?null:t;
+  renderDetail(type);
+  render();
+}
+
+function renderDetail(type){
+  const el=document.getElementById('detail');
+  if(!sel){el.innerHTML=`<div class="empty"><div class="lbl">POSITION DETAIL</div><div class="sub">Click any row<br>to view details</div></div>`;return;}
+  const p=type==='income'?INCOME.find(x=>x.t===sel):SPEC.find(x=>x.t===sel);
+  if(!p) return;
+  let rows='';
+  if(type==='income'){
+    const gl=p.cost?((p.p-p.cost)/p.cost*100).toFixed(1):null;
+    [['PRICE','$'+p.p.toFixed(2),'#fff'],['SHARES',''+p.sh,'var(--dim)'],['VALUE','$'+Math.round(p.sh*p.p).toLocaleString(),'var(--blue)'],
+     ['COST',p.cost?'$'+p.cost:'N/A','var(--dim2)'],['GAIN/LOSS',gl?`${parseFloat(gl)>=0?'+':''}${gl}%`:'—',parseFloat(gl)>=0?'var(--green)':'var(--red)'],
+     ['YIELD',p.y?p.y+'%':'0%',p.y>8?'var(--orange)':p.y>5?'var(--gold)':'var(--green)'],['ANN.DIV',p.div?'$'+p.div:'—','var(--gold)'],
+     ['SECTOR',p.cat,'var(--dim)'],['STATUS',p.st,gc(p.st)],['DIV FREQ',p.freq,'var(--dim2)']
+    ].forEach(([k,v,c])=>{rows+=`<div class="dkv"><span class="dk">${k}</span><b style="color:${c};font-weight:normal;text-align:right;max-width:60%;word-break:break-word">${v}</b></div>`;});
+  } else {
+    const sd=((p.p-p.stop)/p.p*100).toFixed(0);
+    const gl=((p.p-p.entry)/p.entry*100).toFixed(1);
+    [['ENTRY','$'+p.entry.toFixed(2),'var(--dim)'],['NOW','$'+p.p.toFixed(2),'#fff'],
+     ['G/L%',(parseFloat(gl)>=0?'+':'')+gl+'%',parseFloat(gl)>=0?'var(--green)':'var(--red)'],
+     ['SHARES',''+p.sh,'var(--dim)'],['VALUE','$'+(p.sh*p.p).toFixed(0),'var(--blue)'],
+     ['STOP','$'+p.stop.toFixed(2)+' (-'+sd+'%)','var(--red)'],['ANALYSTS',p.analysts,'var(--green)'],
+     ['PRICE TARGET',p.pt,'var(--gold)'],['SECTOR',p.cat,'var(--dim)'],
+     ['RISK',p.risk,p.risk==='HIGH'?'var(--red)':p.risk==='MED'?'var(--gold)':'var(--green)'],
+     ['STATUS',p.st,gc(p.st)]
+    ].forEach(([k,v,c])=>{rows+=`<div class="dkv"><span class="dk">${k}</span><b style="color:${c};font-weight:normal;text-align:right;max-width:60%;word-break:break-word">${v}</b></div>`;});
+  }
+  el.innerHTML=`<div class="ticker-header"><div class="ticker-name">${p.t}</div><div class="close-btn" onclick="clearSel()">[×]</div></div>
+    <div class="co-name">${p.name}</div>${rows}
+    <button id="ai-btn" onclick="askAbout('${p.t}')">ASK AI ABOUT ${p.t} →</button>`;
+}
+
+function clearSel(){sel=null;document.getElementById('detail').innerHTML=`<div class="empty"><div class="lbl">POSITION DETAIL</div><div class="sub">Click any row<br>to view details</div></div>`;render();}
+
+function askAbout(t){
+  tab='ai';
+  document.querySelectorAll('.tab').forEach((b,i)=>{b.classList.remove('active');if(i===2)b.classList.add('active');});
+  renderAI(document.getElementById('content'));
+  const i=document.getElementById('ai-input');
+  if(i){i.value=`Tell me everything about ${t} in my portfolio — current situation, risks, and recommended action.`;i.focus();}
+}
+
+init();
+</script>
+</body>
+</html>
